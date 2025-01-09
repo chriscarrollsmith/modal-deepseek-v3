@@ -8,4 +8,5 @@ dependencies = [
     "huggingface-hub>=0.27.1",
     "modal>=0.71.10",
     "openai>=1.59.5",
+    "python-dotenv>=1.0.1",
 ]

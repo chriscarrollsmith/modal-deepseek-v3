@@ -3,7 +3,7 @@
 # pytest: false
 # ---
 
-# # Run OpenAI-compatible LLM inference with LLaMA 3.1-8B and vLLM
+# # Run OpenAI-compatible LLM inference with DeepSeek V3 and vLLM
 
 # LLMs do more than just model language: they chat, they produce JSON and XML, they run code, and more.
 # This has complicated their interface far beyond "text-in, text-out".
@@ -32,21 +32,16 @@
 import modal
 
 vllm_image = modal.Image.debian_slim(python_version="3.12").pip_install(
-    "vllm==0.6.3post1", "fastapi[standard]==0.115.4"
+    "vllm==0.6.6post1", "fastapi[standard]==0.115.6"
 )
 
 # ## Download the model weights
 
-# We'll be running a pretrained foundation model -- Meta's LLaMA 3.1 8B
-# in the Instruct variant that's trained to chat and follow instructions,
-# quantized to 4-bit by [Neural Magic](https://neuralmagic.com/) and uploaded to Hugging Face.
+# We'll be running a pretrained foundation model -- DeepSeek V3
 
-# You can read more about the `w4a16` "Machete" weight layout and kernels
-# [here](https://neuralmagic.com/blog/introducing-machete-a-mixed-input-gemm-kernel-optimized-for-nvidia-hopper-gpus/).
-
-MODELS_DIR = "/llamas"
-MODEL_NAME = "meta-llama/Llama-3.3-70B-Instruct"
-MODEL_REVISION = "6f6073b423013f6a7d4d9f39144961bfbfbc386b"
+MODELS_DIR = "/deepseeks"
+MODEL_NAME = "cognitivecomputations/DeepSeek-V3-AWQ"
+MODEL_REVISION = "604068d51215c8778b3ae1223ff5686f6c9e7729"
 
 # We need to make the weights of that model available to our Modal Functions.
 
@@ -55,9 +50,9 @@ MODEL_REVISION = "6f6073b423013f6a7d4d9f39144961bfbfbc386b"
 # [examples repository](https://github.com/modal-labs/modal-examples).
 
 try:
-    volume = modal.Volume.lookup("llamas", create_if_missing=False)
+    volume = modal.Volume.lookup("deepseeks", create_if_missing=False)
 except modal.exception.NotFoundError:
-    raise Exception("Download models first with modal run download_llama.py")
+    raise Exception("Download models first with modal run download_deepseek.py")
 
 
 # ## Build a vLLM engine and serve it
@@ -85,15 +80,14 @@ app = modal.App(
     ]
 )
 
-N_GPU = 2  # tip: for best results, first upgrade to more powerful GPUs, and only then increase GPU count
+N_GPU = 8  # tip: for best results, first upgrade to more powerful GPUs, and only then increase GPU count
 
 MINUTES = 60  # seconds
 HOURS = 60 * MINUTES
 
-
 @app.function(
     image=vllm_image,
-    gpu=modal.gpu.H100(count=N_GPU),
+    gpu=[modal.gpu.H100(count=N_GPU)],
     container_idle_timeout=5 * MINUTES,
     timeout=24 * HOURS,
     allow_concurrent_inputs=1000,
@@ -157,8 +151,9 @@ def serve():
         model=MODELS_DIR + "/" + MODEL_NAME,
         tensor_parallel_size=N_GPU,
         gpu_memory_utilization=0.90,
-        max_model_len=8096,
+        max_model_len=4096,
         enforce_eager=False,  # capture the graph for faster inference, but slower cold starts (30s > 20s)
+        trust_remote_code=True,
     )
 
     engine = AsyncLLMEngine.from_engine_args(

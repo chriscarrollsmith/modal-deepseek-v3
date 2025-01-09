@@ -9,4 +9,5 @@ dependencies = [
     "modal>=0.71.10",
     "openai>=1.59.5",
     "python-dotenv>=1.0.1",
+    "vllm>=0.6.6.post1",
 ]

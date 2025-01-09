@@ -78,10 +78,14 @@ except modal.exception.NotFoundError:
 # After attaching that engine to the FastAPI app via the `api_server` module of the vLLM library, we return the FastAPI app
 # so it can be served on Modal.
 
-app = modal.App("example-vllm-openai-compatible")
+app = modal.App(
+    "example-vllm-openai-compatible",
+    secrets=[
+        modal.Secret.from_name("api-secret", required_keys=["BEARER_TOKEN"])
+    ]
+)
 
-N_GPU = 1  # tip: for best results, first upgrade to more powerful GPUs, and only then increase GPU count
-TOKEN = "super-secret-token"  # auth token. for production use, replace with a modal.Secret
+N_GPU = 2  # tip: for best results, first upgrade to more powerful GPUs, and only then increase GPU count
 
 MINUTES = 60  # seconds
 HOURS = 60 * MINUTES
@@ -97,6 +101,7 @@ HOURS = 60 * MINUTES
 )
 @modal.asgi_app()
 def serve():
+    import os
     import fastapi
     import vllm.entrypoints.openai.api_server as api_server
     from vllm.engine.arg_utils import AsyncEngineArgs
@@ -134,7 +139,7 @@ def serve():
 
     # security: inject dependency on authed routes
     async def is_authenticated(api_key: str = fastapi.Security(http_bearer)):
-        if api_key.credentials != TOKEN:
+        if api_key.credentials != os.environ["BEARER_TOKEN"]:
             raise fastapi.HTTPException(
                 status_code=fastapi.status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication credentials",

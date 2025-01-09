@@ -1,9 +1,14 @@
 """This simple script shows how to interact with an OpenAI-compatible server from a client."""
 
 import argparse
+import os
 
+import dotenv
 import modal
 from openai import OpenAI
+
+# Load the BEARER_TOKEN from the .env file into the environment
+dotenv.load_dotenv()
 
 
 class Colors:
@@ -74,7 +79,7 @@ def main():
     parser.add_argument(
         "--api-key",
         type=str,
-        default="super-secret-token",
+        default=os.getenv("BEARER_TOKEN"),
         help="The API key to use for authentication, set in your api.py",
     )
 

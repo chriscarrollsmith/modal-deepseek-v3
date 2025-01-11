@@ -29,5 +29,3 @@ Unfortunately, the [official bf16 DeepSeek v3 model](https://huggingface.co/cogn
 - Download the DeepSeek V3 model from Hugging Face with `uv run modal run download_deepseek.py` (this will take a while because it's a huge model at 671B parameters)
 - Deploy the app by running: `uv run modal deploy vllm_inference.py`
 - Test the app by running: `uv run python client.py`
-
-![Screenshot of output](screenshot.png)

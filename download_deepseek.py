@@ -1,7 +1,3 @@
-# ---
-# args: ["--force-download"]
-# ---
-
 import modal
 
 MODELS_DIR = "/deepseeks"

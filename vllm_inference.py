@@ -111,7 +111,7 @@ def serve():
     request_logger = RequestLogger(max_log_len=2048)
 
     base_model_paths = [
-        BaseModelPath(name=MODEL_NAME.split("/")[1], model_path=MODEL_NAME)
+        BaseModelPath(name="deepseek_v3", model_path=MODEL_NAME)
     ]
 
     api_server.chat = lambda s: OpenAIServingChat(
